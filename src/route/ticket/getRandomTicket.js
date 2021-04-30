@@ -5,7 +5,10 @@ export const findOne = async (req, res) =>{
 
     let getTicket = () => {
         return new Promise((resolve, reject) => {
-            Ticket.findOne({ isSold: false }, 'ticketId seatNumber isSold').exec((err, data) => {
+            Ticket.aggregate([
+                { $match: { isSold: false } },
+                { $sample: { size: 1 } }
+            ]).exec((err, data) => {
                 err ? reject(err) : resolve(data);
             })
         })
@@ -23,7 +26,7 @@ export const findOne = async (req, res) =>{
         let ticket =  await getTicket();
         if (ticket) {
             await updateTicket(ticket._id, { isSold: true })
-            res.status(constant.RESPONSE.OK.STATUS).send(ticket);
+            res.status(constant.RESPONSE.OK.STATUS).send(ticket[0]);
         } else {
             res.status(constant.RESPONSE.OK.STATUS).send("No ticket available")
         }
